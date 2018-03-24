@@ -1,0 +1,3 @@
+name = Rules actions for AWS SDK for PHP
+description = Rules actions for executing various AWS SDKs
+core = 7.x

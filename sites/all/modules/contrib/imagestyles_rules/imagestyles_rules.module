@@ -1,0 +1,128 @@
+<?php
+
+/**
+ * Internal function find the image style name out of the selected option
+ * within the rules conditions and actions provided by this module.
+ */
+function _imagestyles_rules_style_name($option) {
+  if (substr($option, 0, 2) == 'n:') {
+    return substr($option, 2);
+  }
+  else {
+    $styles = image_styles();
+    $id = substr($option,2);
+    foreach ($styles as $style) {
+      if (isset($style['isid']) && $style['isid'] == $id) {
+        return $style['name'];
+      }
+    }
+  }
+}
+
+/*
+ * Implements hook_image_effect_info().
+ */
+function imagestyles_rules_image_effect_info() {
+  $effects = array();
+
+  $effects['imagestyles_rules'] = array(
+    'label' => t('Invoke a rules event'),
+    'help' => t('Allows you to catch the event and chose other styles based on rules conditions.'),
+    'effect callback' => 'imagestyles_rules_effect',
+    'dimensions callback' => 'imagestyles_rules_dimensions',
+    'form callback' => 'imagestyles_rules_form',
+  );
+
+  return $effects;
+}
+
+/**
+ * Image effect configuration form.
+ */
+function imagestyles_rules_form(array $data) {
+  $styles = image_styles();
+  foreach ($styles as $style) {
+    if ($style['name'] == arg(5)) {
+      $value = $style['isid'];
+    }
+  }
+
+  $form['imagestyles_rules_style'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Style ID'),
+    '#default_value' => $value,
+    '#disabled' => TRUE,
+    '#description' => t('This is the ID of the style in which this effect is used, as it will be needed within rules. <b>It is auto-detected.</b>'),
+  );
+
+  return $form;
+}
+
+/**
+ * Image effect code. We use this function to invoke a rules event allowing
+ * rules to control what image style to apply.
+ */
+function imagestyles_rules_effect(stdClass $image, array $data) {
+  $image_style = _imagestyles_rules_style_name('i:' . $data['imagestyles_rules_style']);
+  $original = clone $image;
+  rules_invoke_event('imagestyles_rules_effect', $original, $image, array(), $image_style);
+  return TRUE;
+}
+
+/**
+ * Image dimenstion code. Same as effect only that we use a special code to only
+ * transform dimensions, this is to comply with what the image module expects
+ * to happen when applying an image style effect
+ */
+function imagestyles_rules_dimensions(array &$dimensions, array $data) {
+  $image_style = _imagestyles_rules_style_name('i:' . $data['imagestyles_rules_style']);
+  $image = new stdClass();
+  $image->imagestyles_rules = 'dimensions';
+  $image->info = $dimensions;
+  // Trick to allow the action to modify the dimensions
+  $dimensions = (object) $dimensions;
+  $original = clone $image;
+  rules_invoke_event('imagestyles_rules_effect', $original, $image, $dimensions, $image_style);
+  $dimensions = (array) $dimensions;
+  return TRUE;
+}
+
+/**
+ * Implements hook_entity_prepare_view().
+ *
+ * Because width and height is not added by drupal core and we need it
+ * to make sure rules conditions exposed by this module work also
+ * for transforming dimensions, we make sure those are added to image info
+ */
+function imagestyles_rules_entity_prepare_view($entities, $type, $langcode) {
+  static $image_info = array();
+
+  foreach ($entities as $uid => $entity) {
+    list(, , $bundle) = entity_extract_ids($type, $entity);
+    $fields = field_info_instances($type, $bundle);
+    foreach ($fields as $field) {
+      if (isset($field['settings']['default_image']) && $field['settings']['default_image']) {
+        $key = $field['field_name'];
+        if (is_array($entity->$key)) {
+          foreach ($entity->$key as $langcode => &$items) {
+            foreach ($items as &$item) {
+              if (isset($item['is_default']) && $item['is_default']) {
+                // We load the width and height of the default image as we will
+                // need it for the rules to work prpoerly
+                // when transforming dimensions.
+                if (!isset($image_info[$item['uri']])) {
+                  $image_info[$item['uri']] = image_get_info($item['uri']);
+                }
+
+                if (is_array($image_info[$item['uri']])) {
+                  $item['width'] = $image_info[$item['uri']]['width'];
+                  $item['height'] = $image_info[$item['uri']]['height'];
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

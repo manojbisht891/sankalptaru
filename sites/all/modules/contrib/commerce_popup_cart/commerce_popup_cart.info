@@ -1,0 +1,17 @@
+name = Commerce Popup Cart
+description = Provides a block with popup shopping cart functionality
+core = 7.x
+
+dependencies[] = commerce_cart
+package = Commerce (contrib)
+configure = admin/commerce/config/popup-cart
+
+stylesheets[all][] = css/cart-popup.css
+scripts[] = js/cart-popup.js
+
+; Information added by Drupal.org packaging script on 2016-12-21
+version = "7.x-1.0"
+core = "7.x"
+project = "commerce_popup_cart"
+datestamp = "1482339786"
+

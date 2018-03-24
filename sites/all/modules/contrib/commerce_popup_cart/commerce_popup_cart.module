@@ -1,0 +1,154 @@
+<?php
+/**
+* Implementation of hook_menu
+*/
+function commerce_popup_cart_menu() {    
+  $items['admin/commerce/config/popup-cart'] = array(
+          'title' => t('Popup Cart Config'),
+          'description' => t('Configure the Commerce Popup Cart'),
+          'file' => 'commerce_popup_cart.admin.inc',
+          'page callback' => 'drupal_get_form',
+          'page arguments' => array('commerce_popup_cart_admin_form'),          
+          'access arguments' => array('administer popup cart'),
+    );                
+    return $items;
+}
+ 
+/**
+* Implementation of hook_permission
+*/
+function commerce_popup_cart_permission(){
+  return array(
+    'administer popup cart' => array(
+      'title' => t('Administer the Commerce Popup Cart'),
+      'description' => t('Perform administration tasks for the Commerce Popup Cart module..'),
+    ),
+  );  
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function commerce_popup_cart_block_info() {
+  $blocks = array();  
+   // Define the basic shopping cart block and hide it on the checkout pages.
+  $blocks['commerce_popup_cart'] = array(
+    'info' => t('Popup Shopping cart'),
+    'cache' => DRUPAL_NO_CACHE,
+    'visibility' => 0,    
+  );  
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function commerce_popup_cart_block_view($delta='') {
+  $block = array();
+ 
+  switch($delta) {    
+    case 'commerce_popup_cart':
+      global $user;
+      // Default to an empty cart block message.
+      $content = '';
+  
+      // First check to ensure there are products in the shopping cart.
+      if ($order = commerce_cart_order_load($user->uid)) {
+        $wrapper = entity_metadata_wrapper('commerce_order', $order);
+  
+          // Build the variables array to send to the cart block template.
+          $variables = array(
+            'order' => $order,
+            'contents_view' => commerce_embed_view('commerce_cart_block', 'defaults', array($order->order_id), $_GET['q']),
+          );         
+           
+          $quantity = 0;
+          
+          foreach ($wrapper->commerce_line_items as $line_item) {
+            if (!$line_item instanceof EntityMetadataWrapper) {
+              $line_item = entity_metadata_wrapper('commerce_line_item', $line_item);
+            }
+            $types = commerce_popup_cart_selected_line_items();
+            
+            if (in_array($line_item->type->value(), $types)) {
+              $quantity += $line_item->quantity->value();
+            }
+          }            
+                            
+          if ($quantity > 0){
+			      if (variable_get('commerce_popup_cart_item_suffix', 0)){
+                $quantity = format_plural($quantity, '1 item', '@count items');
+            }
+            $content = theme('commerce_popup_cart_cart', array(
+              'product_count' => $quantity,
+              'variables' => $variables,              
+            ));                        
+                          
+          }elseif (variable_get('commerce_popup_cart_show_empty_cart', 0) == 1){
+            $content = commerce_popup_cart_block_view_get_empty_cart($variables);
+          }
+      }elseif (variable_get('commerce_popup_cart_show_empty_cart', 0) == 1){        
+          $content = commerce_popup_cart_block_view_get_empty_cart($variables = array());          
+      }
+      
+      // If the superfish module is not installed then add hoverintent script
+      if (!module_exists('superfish')){
+        drupal_add_js(drupal_get_path('module','commerce_popup_cart') . '/js/jquery.hoverIntent.minified.js');  
+      }
+      
+      return array('subject' => t('Shopping cart'), 'content' => $content);
+      break;
+  } 
+  return $block;
+}
+
+function commerce_popup_cart_block_view_get_empty_cart($variables){
+  return theme('commerce_popup_cart_empty', array(
+    'empty_cart_message' => variable_get('commerce_popup_cart_empty_cart_msg', 'Your cart is empty'),
+    'variables' => $variables,
+  ));
+}
+
+
+function commerce_popup_cart_theme() {
+  $default_template_path = drupal_get_path('module', 'commerce_popup_cart') . '/theme'; 
+     
+  return array(    
+    'commerce_popup_cart_cart' => array(
+      'variables' => array('product_count' => NULL, 'variables' => NULL),
+      'path' => $default_template_path,
+      'template' => 'commerce_popup_cart_cart',
+    ),    
+    'commerce_popup_cart_empty' => array(
+      'variables' => array('empty_cart_message' => NULL, 'variables' => NULL,),
+      'path' => $default_template_path,
+      'template' => 'commerce_popup_cart_empty',
+    ),
+  );
+}
+
+function commerce_popup_cart_line_items() {
+  $line_items = array();
+  $line_item_types = commerce_line_item_types();
+  foreach($line_item_types as $line_item) {
+    $line_items[$line_item['type']] = t($line_item['name']);
+  }
+  return $line_items;
+}
+
+/*
+ * Create array with line item types to be included in the counter
+ *
+ * @return array
+ *    Array with the selected line item types.
+ */
+function commerce_popup_cart_selected_line_items() {
+  $line_item_types = variable_get('commerce_popup_cart_line_items_types', array('product' => 'product') );
+  $types = array();
+  foreach($line_item_types as $type => $value ) {
+    if ($value != '0') {
+      $types[] = $type;
+    }
+  }
+  return $types;
+}

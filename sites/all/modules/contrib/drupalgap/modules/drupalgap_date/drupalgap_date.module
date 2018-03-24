@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * Implements hook_services_request_postprocess_alter().
+ */
+function drupalgap_date_services_request_postprocess_alter($controller, $args, &$result) {
+  if ($controller['callback'] == '_system_resource_connect') {
+    if (isset($_GET['dgSkipExtras']) && $_GET['dgSkipExtras'])  { return; }
+    $result->time_zones = system_time_zones();
+    foreach ($result->time_zones as $key => $value) {
+      $parts = explode(' ', $value);
+      $result->time_zones[$key] = intval($parts[sizeof($parts) - 1]) / 100 * 60 * 60;
+    }
+  }
+}
