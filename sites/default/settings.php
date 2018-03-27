@@ -243,11 +243,6 @@
  *     'database' => '/path/to/databasefilename',
  *   );
  * @endcode
- 
-      'database' => 'sankalptaru',
-      'username' => 'sankalptaru',
-      'password' => 'Test1234!',
-      'host' => 'sankalptaru.ckh6y96m0e6v.us-east-1.rds.amazonaws.com',
  */
 $databases = array (
   'default' => 
@@ -295,7 +290,7 @@ $update_free_access = FALSE;
  *   $drupal_hash_salt = file_get_contents('/home/example/salt.txt');
  *
  */
-$drupal_hash_salt = 'UVbJZDV-KPC3qwCa8mW_Lpd1A6ZxHz2ioT5cvCkpcms';
+$drupal_hash_salt = getenv('HASH_SALT');//'UVbJZDV-KPC3qwCa8mW_Lpd1A6ZxHz2ioT5cvCkpcms';
 
 /**
  * Base URL (optional).
@@ -438,7 +433,8 @@ ini_set('session.cookie_lifetime', 2000000);
  * Be aware, however, that it is likely that this would allow IP
  * address spoofing unless more advanced precautions are taken.
  */
-# $conf['reverse_proxy'] = TRUE;
+// AWS Elastic beanstalk will be configured as a load balancer in front of one or more EC2 servers
+$conf['reverse_proxy'] = TRUE;
 
 /**
  * Specify every reverse proxy IP address in your environment.
