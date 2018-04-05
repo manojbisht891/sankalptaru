@@ -107,8 +107,21 @@ function rules_aws_sdk_action_http_client($args, $element) {
 		'base_uri' => $args['base'],
 		'timeout'  => 5.0,
 	]);
-    
-	$response = $client->request($args['method'], '');
-    $responseBody = $response->getBody()->getContents();
+	$retryCount = 0;
+	do {
+		$retry = false;
+		try {
+			$response = $client->request($args['method'], '');
+			$responseBody = $response->getBody()->getContents();
+		}
+		catch(Exception $e){ 
+			watchdog("AWS RULES",serialize($e) );
+			if($retryCount <2){
+				$retry = true; 
+				$retryCount++;
+			}
+		}
+	}
+	while($retry);
     return array('response' =>$responseBody );
 }
