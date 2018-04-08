@@ -168,7 +168,7 @@ function page_response_data() {
     $transaction->amount = $amount;
     $transaction->message = $status;
     $transaction->currency_code = $currency;
-    //$transaction->remote_id = $transactionNo;
+    $transaction->remote_id = $pay_id;
     $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
     commerce_payment_transaction_save($transaction);
     commerce_payment_redirect_pane_next_page($order_success);
@@ -180,7 +180,7 @@ function page_response_data() {
     $order_failure = commerce_order_status_update($commerce_order, $name, $skip_save = FALSE, $revision = TRUE, $log = '');
     $transaction = commerce_payment_transaction_new('instamojo', $order_id);
     $transaction->message = $status;
-    //$transaction->remote_id = $transactionNo;
+    $transaction->remote_id = $pay_id;
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     commerce_payment_transaction_save($transaction);
     commerce_payment_redirect_pane_previous_page($order_failure);
