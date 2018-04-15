@@ -69,6 +69,16 @@ $actions = array(
                 'type' => 'text',
                 'label' => t('Request body'),
                 ),
+            'username' => array(
+                'type' => 'text',
+                'label' => t('Username'),
+				'optional'=> true
+                ),
+            'password' => array(
+                'type' => 'text',
+                'label' => t('Password'),
+				'optional'=> true
+                ),
             ),
         'provides' => array(
             'response' => array(
@@ -111,7 +121,8 @@ function rules_aws_sdk_action_http_client($args, $element) {
 	do {
 		$retry = false;
 		try {
-			$response = $client->request($args['method'], '');
+			$auth = (isset($args['username']))?['auth' => [$args['username'], $args['password']]]:'';
+			$response = $client->request($args['method'], $auth);
 			$responseBody = $response->getBody()->getContents();
 		}
 		catch(Exception $e){ 
