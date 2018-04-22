@@ -126,7 +126,7 @@ function rules_aws_sdk_action_http_client($args, $element) {
 			$responseBody = $response->getBody()->getContents();
 		}
 		catch(Exception $e){ 
-			watchdog("AWS RULES",serialize($e) );
+			watchdog("AWS RULES",serialize($e->message) );
 			if($retryCount <2){
 				$retry = true; 
 				$retryCount++;
