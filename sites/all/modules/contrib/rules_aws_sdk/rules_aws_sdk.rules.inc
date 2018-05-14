@@ -46,6 +46,10 @@ $actions = array(
                 'type' => 'text',
                 'label' => t('Response'),
                 ),
+            'error' => array(
+                'type' => 'text',
+                'label' => t('Error'),
+                ),
             ),
         ),
     'rules_aws_sdk_action_http_client' => array(
@@ -98,18 +102,34 @@ return $actions;
  */
 
 function rules_aws_sdk_action_lambda_invoke($args, $element) {
-        $client = LambdaClient::factory([
-                'version' => 'latest',
-                'region'  => $args['region'],
-        ]);
+    $client = LambdaClient::factory([
+            'version' => 'latest',
+            'region'  => $args['region'],
+    ]);
+	$retryCount = 0;
+	do {
+		$retry = false;
+		try {
+			$result = $client->invoke([
+					// The name your created Lamda function
+					'FunctionName' => $args['function'],
+					'InvocationType'=>'RequestResponse',
+					'Payload'=>$args['body']
+			]);
+		}
+		catch(Exception $e){ 
+			watchdog("AWS LAMBDA RULES","Call to:".$args['base'] );
+			watchdog("AWS LAMBDA RULES",serialize($e->getMessage()) );
+			if($retryCount <0){
+				$retry = true; 
+				$retryCount++;
+			}
+		}
+	}
+	while($retry);
 
-        $result = $client->invoke([
-                // The name your created Lamda function
-                'FunctionName' => $args['function'],
-                'InvocationType'=>'RequestResponse',
-                'Payload'=>$args['body']
-        ]);
-        return array('response' =>$result->get('Payload')->getContents() );
+    if ($result!=null) $return = array('response' =>$result->get('Payload')->getContents(),'error'=>'' );
+	else  $return = array('response' =>'','error'=>'1' );
 }
 
 function rules_aws_sdk_action_http_client($args, $element) {
