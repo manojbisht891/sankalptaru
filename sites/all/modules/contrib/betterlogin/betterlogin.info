@@ -5,9 +5,8 @@ package = User interface
 
 core = 7.x
 
-; Information added by Drupal.org packaging script on 2015-07-29
-version = "7.x-1.4"
+; Information added by Drupal.org packaging script on 2018-05-10
+version = "7.x-1.5"
 core = "7.x"
 project = "betterlogin"
-datestamp = "1438155243"
-
+datestamp = "1525940286"
