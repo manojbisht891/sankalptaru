@@ -106,6 +106,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
             'version' => 'latest',
             'region'  => $args['region'],
     ]);
+	watchdog("AWS LAMBDA RULES","Call to:".$args['function'] );
 	$retryCount = 0;
 	do {
 		$retry = false;
@@ -116,9 +117,10 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 					'InvocationType'=>'RequestResponse',
 					'Payload'=>$args['body']
 			]);
+			
+			watchdog("AWS LAMBDA RULES",serialize($result) );
 		}
 		catch(Exception $e){ 
-			watchdog("AWS LAMBDA RULES","Call to:".$args['base'] );
 			watchdog("AWS LAMBDA RULES",serialize($e->getMessage()) );
 			if($retryCount <0){
 				$retry = true; 
@@ -146,7 +148,6 @@ function rules_aws_sdk_action_http_client($args, $element) {
 			$responseBody = $response->getBody()->getContents();
 		}
 		catch(Exception $e){ 
-			watchdog("AWS RULES","Call to:".$args['base'] );
 			watchdog("AWS RULES",serialize($e->getMessage()) );
 			if($retryCount <2){
 				$retry = true; 
