@@ -120,7 +120,6 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 			]);
 			
 			$responseData =$result->get('Payload')->getContents();
-			watchdog("aws data",$responseData);
 		}
 		catch(Exception $e){ 
 			watchdog("AWS LAMBDA RULES",serialize($e->getMessage()) );
@@ -134,6 +133,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 
     if ($responseData!=null) $return = array('response' =>$responseData,'error'=>'' );
 	else  $return = array('response' =>'','error'=>'1' );
+	return $return;
 }
 
 function rules_aws_sdk_action_http_client($args, $element) {
