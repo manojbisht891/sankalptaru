@@ -106,7 +106,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
             'version' => 'latest',
             'region'  => $args['region'],
     ]);
-	watchdog("AWS LAMBDA RULES","Call to:".$args['function'] );
+	watchdog("AWS LAMBDA RULES","Call to>>:".$args['function'] );
 	$retryCount = 0;
 	$responseData = null;
 	do {
@@ -120,6 +120,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 			]);
 			
 			$responseData =$result->get('Payload')->getContents();
+			watchdog("aws data",$responseData);
 		}
 		catch(Exception $e){ 
 			watchdog("AWS LAMBDA RULES",serialize($e->getMessage()) );
