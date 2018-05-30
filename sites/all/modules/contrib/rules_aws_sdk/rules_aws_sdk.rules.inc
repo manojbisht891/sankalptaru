@@ -108,6 +108,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
     ]);
 	watchdog("AWS LAMBDA RULES","Call to:".$args['function'] );
 	$retryCount = 0;
+	$responseData = null;
 	do {
 		$retry = false;
 		try {
@@ -118,7 +119,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 					'Payload'=>$args['body']
 			]);
 			
-			watchdog("AWS LAMBDA RULES",serialize($result) );
+			$responseData =$result->get('Payload')->getContents();
 		}
 		catch(Exception $e){ 
 			watchdog("AWS LAMBDA RULES",serialize($e->getMessage()) );
@@ -130,7 +131,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 	}
 	while($retry);
 
-    if ($result!=null) $return = array('response' =>$result->get('Payload')->getContents(),'error'=>'' );
+    if ($responseData!=null) $return = array('response' =>$responseData,'error'=>'' );
 	else  $return = array('response' =>'','error'=>'1' );
 }
 
