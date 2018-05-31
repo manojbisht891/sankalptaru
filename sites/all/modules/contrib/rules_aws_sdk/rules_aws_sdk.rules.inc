@@ -120,9 +120,10 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 			]);
 			
 			$responseData =$result->get('Payload')->getContents();
+			watchdog("AWS LAMBDA Response", $responseData);
 		}
 		catch(Exception $e){ 
-			watchdog("AWS LAMBDA RULES",serialize($e->getMessage()) );
+			watchdog("AWS LAMBDA RULES Exception ",serialize($e->getMessage()) );
 			if($retryCount <0){
 				$retry = true; 
 				$retryCount++;
@@ -131,6 +132,7 @@ function rules_aws_sdk_action_lambda_invoke($args, $element) {
 	}
 	while($retry);
 
+	watchdog("AWS LAMBDA Response before return", $responseData);
     if ($responseData!=null) $return = array('response' =>$responseData,'error'=>'' );
 	else  $return = array('response' =>'','error'=>'1' );
 	return $return;
